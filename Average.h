@@ -40,6 +40,9 @@
 
 #include <math.h>
 
+#define     INT32_MAX   0x7fffffffL
+#define     INT32_MIN   (-INT32_MAX - 1L)
+
 inline static float sqr(float x) {
     return x*x;
 }
@@ -53,6 +56,8 @@ template <class T> class Average {
         uint32_t _position;                                   // _position variable for circular buffer
         uint32_t _count;
         uint32_t _size;
+        T _min;
+        T _max;
 
     public:
         // Public functions and variables.  These can be accessed from
@@ -65,6 +70,8 @@ template <class T> class Average {
         T mode();
         T minimum();
         T maximum();
+        T absoluteMinimum();
+        T absoluteMaximum();
         float stddev();
         T get(uint32_t);
         void leastSquares(float &m, float &b, float &r);
@@ -80,6 +87,8 @@ template <class T> int Average<T>::getCount() {
 template <class T> Average<T>::Average(uint32_t size) {
     _size = size;
     _count = 0;
+    _min = INT32_MAX;
+    _max = INT32_MIN;
     _store = (T *)malloc(sizeof(T) * size);
     _position = 0;                                            // track position for circular storage
     _sum = 0;                                                 // track sum for fast mean calculation
@@ -102,6 +111,8 @@ template <class T> void Average<T>::push(T entry) {
     _store[_position] = entry;                                // store new value in array
     _sum += entry;                                            // add the new value to _sum
     _position += 1;                                           // increment the position counter
+    if(entry < _min) _min = entry;                        // Keep absolute minimum
+    if(entry > _max) _max = entry;                        // Keep absolute maximum
     if (_position >= _size) _position = 0;                    // loop the position counter
 }
 
@@ -153,6 +164,14 @@ template <class T> T Average<T>::mode() {
 		}
 	}
 	return most;
+}
+
+template <class T> T Average<T>::absoluteMinimum() {
+    return _min;
+}
+
+template <class T> T Average<T>::absoluteMaximum() {
+    return _max;
 }
 
 template <class T> T Average<T>::minimum() {
